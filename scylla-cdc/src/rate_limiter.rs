@@ -6,9 +6,7 @@ use std::sync::OnceLock;
 static GLOBAL_RATE_LIMITER: OnceLock<Arc<DefaultDirectRateLimiter>> = OnceLock::new();
 
 /// Inject the rate limiter from the application
-pub fn set_rate_limiter(
-    rate_limiter: Arc<DefaultDirectRateLimiter>,
-) -> Result<(), &'static str> {
+pub fn set_rate_limiter(rate_limiter: Arc<DefaultDirectRateLimiter>) -> Result<(), &'static str> {
     GLOBAL_RATE_LIMITER
         .set(rate_limiter)
         .map_err(|_| "Rate limiter already set")

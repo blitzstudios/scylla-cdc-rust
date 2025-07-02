@@ -115,6 +115,7 @@ impl StreamReader {
             AND \"cdc$time\" < minTimeuuid(?)  BYPASS CACHE",
             keyspace, table_name
         );
+        get_rate_limiter().until_ready().await;
         let query_base = self.session.prepare_statement(query).await?;
         let mut window_begin = self.config.lower_timestamp;
         let window_size = chrono::Duration::from_std(self.config.window_size)?;
