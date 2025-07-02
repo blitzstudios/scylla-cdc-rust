@@ -417,6 +417,7 @@ mod tests {
             &self,
             query: String,
         ) -> Result<PreparedStatement, PrepareError> {
+            get_rate_limiter().until_ready().await;
             self.session.prepare(query).await
         }
 
