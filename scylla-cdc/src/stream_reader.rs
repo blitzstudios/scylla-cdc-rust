@@ -4,7 +4,7 @@ use std::cmp::{max, min};
 use std::sync::Arc;
 use std::time;
 
-use crate::rate_limiter::GLOBAL_RATE_LIMITER;
+use crate::rate_limiter::get_rate_limiter;
 use async_trait::async_trait;
 use itertools::Itertools;
 use scylla::client::session::Session;
@@ -210,7 +210,7 @@ impl StreamReader {
         let mut page_no = 0;
         loop {
             // Apply rate limiting before making the request
-            GLOBAL_RATE_LIMITER.until_ready().await;
+            get_rate_limiter().until_ready().await;
 
             let state_clone = next_state.clone();
             let query_res = self
