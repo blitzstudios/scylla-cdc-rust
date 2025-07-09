@@ -21,6 +21,8 @@ use tracing::{enabled, warn};
 use crate::cdc_types::{GenerationTimestamp, StreamID};
 use crate::checkpoints::{start_saving_checkpoints, CDCCheckpointSaver, Checkpoint};
 use crate::consumer::{CDCRow, CDCRowSchema, Consumer};
+use std::collections::HashMap;
+use tokio::sync::Mutex;
 
 const BASIC_TIMEOUT_SLEEP_MS: u128 = 10;
 const TIMEOUT_FACTOR: u128 = 2;
@@ -81,6 +83,7 @@ pub struct StreamReader {
     stream_id_vec: Vec<StreamID>,
     upper_timestamp: tokio::sync::Mutex<Option<chrono::Duration>>,
     config: CDCReaderConfig,
+    query_cache: Mutex<HashMap<String, PreparedStatement>>,
 }
 
 impl StreamReader {
@@ -94,6 +97,7 @@ impl StreamReader {
             stream_id_vec: stream_ids,
             upper_timestamp: Default::default(),
             config,
+            query_cache: Mutex::new(HashMap::new()),
         }
     }
 
@@ -116,7 +120,13 @@ impl StreamReader {
             keyspace, table_name
         );
         get_rate_limiter().until_ready().await;
-        let query_base = self.session.prepare_statement(query).await?;
+        let mut query_cache = self.query_cache.lock().await;
+        if !query_cache.contains_key(&query) {
+            let stmt = self.session.prepare_statement(query.clone()).await?;
+            query_cache.insert(query.clone(), stmt);
+        }
+        let query_base = query_cache.get(&query).unwrap();
+
         let mut window_begin = self.config.lower_timestamp;
         let window_size = chrono::Duration::from_std(self.config.window_size)?;
         let safety_interval = chrono::Duration::from_std(self.config.safety_interval)?;
@@ -342,6 +352,7 @@ mod tests {
                 stream_id_vec: stream_ids,
                 upper_timestamp: Default::default(),
                 config,
+                query_cache: Mutex::new(HashMap::new()),
             }
         }
     }
