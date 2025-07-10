@@ -4,7 +4,6 @@ use std::cmp::{max, min};
 use std::sync::Arc;
 use std::time;
 
-use crate::rate_limiter::get_rate_limiter;
 use async_trait::async_trait;
 use itertools::Itertools;
 use scylla::client::session::Session;
@@ -119,7 +118,6 @@ impl StreamReader {
             AND \"cdc$time\" < minTimeuuid(?)  BYPASS CACHE",
             keyspace, table_name
         );
-        get_rate_limiter().until_ready().await;
         let mut query_cache = self.query_cache.lock().await;
         if !query_cache.contains_key(&query) {
             let stmt = self.session.prepare_statement(query.clone()).await?;
@@ -221,7 +219,6 @@ impl StreamReader {
         let mut page_no = 0;
         loop {
             // Apply rate limiting before making the request
-            get_rate_limiter().until_ready().await;
 
             let state_clone = next_state.clone();
             let query_res = self
@@ -428,7 +425,6 @@ mod tests {
             &self,
             query: String,
         ) -> Result<PreparedStatement, PrepareError> {
-            get_rate_limiter().until_ready().await;
             self.session.prepare(query).await
         }
 

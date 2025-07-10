@@ -1,6 +1,5 @@
 //! A module representing the logic behind saving progress.
 use crate::cdc_types::{GenerationTimestamp, StreamID};
-use crate::rate_limiter::get_rate_limiter;
 use anyhow;
 use async_trait::async_trait;
 use futures::future::RemoteHandle;
@@ -158,7 +157,6 @@ fn get_checkpoint_table_schema(table_name: &str) -> String {
 impl CDCCheckpointSaver for TableBackedCheckpointSaver {
     /// Writes new record containing given timestamp to the checkpoint table.
     async fn save_checkpoint(&self, checkpoint: &Checkpoint) -> anyhow::Result<()> {
-        get_rate_limiter().until_ready().await;
         let timestamp = value::CqlTimestamp(checkpoint.timestamp.as_millis() as i64);
 
         self.session

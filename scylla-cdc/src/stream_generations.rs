@@ -12,7 +12,6 @@ use tokio::time::sleep;
 use tracing::warn;
 
 use crate::cdc_types::{GenerationTimestamp, StreamID};
-use crate::rate_limiter::get_rate_limiter;
 
 /// Component responsible for managing stream generations.
 pub struct GenerationFetcher {
@@ -54,8 +53,6 @@ impl GenerationFetcher {
             new_distributed_system_query(self.get_all_stream_generations_query(), &self.session)
                 .await?;
         query.set_page_size(DEFAULT_PAGE_SIZE);
-
-        get_rate_limiter().until_ready().await;
 
         let mut rows = self
             .session
