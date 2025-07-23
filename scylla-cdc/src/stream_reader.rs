@@ -135,7 +135,6 @@ impl StreamReader {
                 timestamp: window_begin,
             },
         };
-        let (sender, receiver) = watch::channel(checkpoint.clone());
 
         if self.config.should_load_progress {
             let mut loaded_timestamp = chrono::Duration::MAX;
@@ -155,6 +154,8 @@ impl StreamReader {
                 window_begin = max(window_begin, loaded_timestamp);
             }
         }
+
+        let (sender, receiver) = watch::channel(checkpoint.clone());
 
         let mut _handle;
         if self.config.should_save_progress {
