@@ -129,6 +129,16 @@ impl StreamReader {
         let window_size = chrono::Duration::from_std(self.config.window_size)?;
         let safety_interval = chrono::Duration::from_std(self.config.safety_interval)?;
 
+        let mut checkpoint = Checkpoint {
+            timestamp: window_begin.to_std()?,
+            stream_id: self.stream_id_vec[0].clone(),
+            generation: GenerationTimestamp {
+                timestamp: window_begin,
+            },
+        };
+
+        let (sender, receiver) = watch::channel(checkpoint.clone());
+
         if self.config.should_load_progress {
             let mut loaded_timestamp = chrono::Duration::MAX;
             for stream in &self.stream_id_vec {
@@ -147,16 +157,6 @@ impl StreamReader {
                 window_begin = max(window_begin, loaded_timestamp);
             }
         }
-
-        let mut checkpoint = Checkpoint {
-            timestamp: window_begin.to_std()?,
-            stream_id: self.stream_id_vec[0].clone(),
-            generation: GenerationTimestamp {
-                timestamp: window_begin,
-            },
-        };
-
-        let (sender, receiver) = watch::channel(checkpoint.clone());
 
         let mut _handle;
         if self.config.should_save_progress {

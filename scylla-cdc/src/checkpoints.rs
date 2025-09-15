@@ -33,6 +33,7 @@ pub(crate) fn start_saving_checkpoints(
 ) -> RemoteHandle<()> {
     let (fut, handle) = async move {
         loop {
+            sleep(saving_period).await;
             for stream in tracked_streams.iter() {
                 let mut checkpoint = receiver.borrow().clone();
                 checkpoint.stream_id = stream.clone();
