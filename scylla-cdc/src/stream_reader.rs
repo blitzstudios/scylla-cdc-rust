@@ -240,11 +240,12 @@ impl StreamReader {
                     let query_rows_result = query_result.into_rows_result()?;
                     let schema = CDCRowSchema::new(query_rows_result.column_specs());
                     let rows = query_rows_result.rows::<Row>()?;
+                    let mut batch_to_consume = Vec::new();
                     for row in rows {
-                        consumer
-                            .consume_cdc(CDCRow::from_row(row?, &schema))
-                            .await?;
+                        batch_to_consume.push(CDCRow::from_row(row?, &schema));
                     }
+
+                    consumer.consume_cdc(batch_to_consume).await?;
                     match paging_state_response {
                         PagingStateResponse::HasMorePages { state } => next_state = state,
                         PagingStateResponse::NoMorePages => break,
