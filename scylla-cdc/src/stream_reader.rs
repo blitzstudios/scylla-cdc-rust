@@ -120,7 +120,8 @@ impl StreamReader {
         );
         let mut query_cache = self.query_cache.lock().await;
         if !query_cache.contains_key(&query) {
-            let stmt = self.session.prepare_statement(query.clone()).await?;
+            let mut stmt = self.session.prepare_statement(query.clone()).await?;
+            stmt.set_page_size(5000);
             query_cache.insert(query.clone(), stmt);
         }
         let query_base = query_cache.get(&query).unwrap();
