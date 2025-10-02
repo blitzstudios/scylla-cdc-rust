@@ -66,7 +66,6 @@ impl StreamSession for Session {
         window_end: &value::CqlTimestamp,
         paging_state: PagingState,
     ) -> Result<(QueryResult, PagingStateResponse), ExecutionError> {
-        println!("statement.get_page_size(): {}", statement.get_page_size());
         let (query_result, paging_state_response) = self
             .execute_single_page(statement, (ids, window_begin, window_end), paging_state)
             .await?;
