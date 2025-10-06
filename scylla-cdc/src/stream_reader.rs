@@ -161,6 +161,13 @@ impl StreamReader {
 
         let mut _handle;
         if self.config.should_save_progress {
+            // this is to handle edge cases when the reader fetch loop doesn't finish before the 
+            // checkpoints are saved. In that case the checkpoint might be reset to the lower_timestamp value.
+            checkpoint.timestamp = window_begin.to_std()?;
+            checkpoint.generation = GenerationTimestamp {
+                timestamp: window_begin,
+            };
+            self.config.checkpoint_saver.as_ref().unwrap().save_checkpoint(&checkpoint).await?;
             _handle = start_saving_checkpoints(
                 self.stream_id_vec.clone(),
                 self.config.checkpoint_saver.as_ref().unwrap().clone(),
